@@ -5,17 +5,25 @@
 #include <chrono>
 #include <Windows.h>
 
+void min_i(int current_min_i, std::vector<int>& sorted, std::promise<int> prom) {
+    for (int j{current_min_i}; j < sorted.size(); ++j) {
+            if (sorted.at(j) <= sorted.at(current_min_i)) {
+                current_min_i = j;
+            }
+        }
+    prom.set_value(current_min_i);
+}
+
 void selection_sort (std::vector<int>& sorted) {
     int min{}, min_index{};
     for (int i{}; i < sorted.size(); ++i) {
         min = sorted.at(i);
         min_index = i;
-        for (int j{i}; j < sorted.size(); ++j) {
-            if (sorted.at(j) <= min) {
-                min = sorted.at(j);
-                min_index = j;
-            }
-        }
+        std::promise<int> prom;
+        std::future<int> ft_res = prom.get_future();
+        auto res = std::async(min_i, min_index, sorted, std::move(prom));
+        min_index = ft_res.get();
+        min = sorted.at(min_index);
         if (sorted.at(i) > sorted.at(min_index)) {
             int temp{sorted.at(i)};
             sorted.at(i) = sorted.at(min_index);
